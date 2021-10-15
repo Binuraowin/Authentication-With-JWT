@@ -1,6 +1,6 @@
 const User = require('../model/UserModel');
 const mongoose = require("mongoose");
-const {registerValidation} = require('../validator')
+const {registerValidation,loginValidation} = require('../validator')
 const bcrypt = require('bcrypt');
 
 
@@ -61,6 +61,32 @@ exports.register = async (req, res, next) => {
           }
 
   
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err)
+      });
+  }
+
+  exports.user_login = async (req, res, next) => {
+    const {error} = loginValidation(req.body)
+    if(error) return res.status(400).send(error.details[0].message)
+    User.find({
+        email: req.body.email,
+      }).exec()
+      .then(async findResult => {
+          if (findResult.length < 0) {
+              console.log(findResult)
+            res.status(400).send("email not exist")
+          } else {
+              const checkPassword = await bcrypt.compare(req.body.password, findResult[0].password)
+              if(checkPassword){
+                res.send("Logged in")
+              } else{
+                res.send("username or passsword error")
+              }
+              
+          }
       })
       .catch(err => {
         console.log(err);
