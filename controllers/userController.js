@@ -2,6 +2,7 @@ const User = require('../model/UserModel');
 const mongoose = require("mongoose");
 const {registerValidation,loginValidation} = require('../validator')
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 
 exports.register = async (req, res, next) => {
@@ -81,7 +82,8 @@ exports.register = async (req, res, next) => {
           } else {
               const checkPassword = await bcrypt.compare(req.body.password, findResult[0].password)
               if(checkPassword){
-                res.send("Logged in")
+                  const token = jwt.sign({_id: findResult[0]._id},"gkuybbghashafafgyb")
+                  res.header('auth-token',token).send(token)
               } else{
                 res.send("username or passsword error")
               }
