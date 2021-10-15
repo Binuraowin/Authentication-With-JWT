@@ -1,18 +1,24 @@
 const User = require('../model/UserModel');
 const mongoose = require("mongoose");
 const {registerValidation} = require('../validator')
-
+const bcrypt = require('bcrypt');
 
 
 exports.register = async (req, res, next) => {
-    
     const {error} = registerValidation(req.body)
     if(error) return res.status(400).send(error.details[0].message)
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt)
+    const checkEmail = await User.find({
+        email: req.body.email,
+      }).exec()
+      if(checkEmail) res.status(400).send("Email already Exist")
           const user = new User({
             _id: new mongoose.Types.ObjectId(),
             name: req.body.name,
             email: req.body.email,
-            password: req.body.password
+            password: hashedPassword
           });
           try {
             console.log(req.body)
@@ -20,14 +26,44 @@ exports.register = async (req, res, next) => {
               .then(result =>{
                 res.send(result)
               })
-              
-              
           } catch (error) {
               res.status(400).send(error)
           }
-
-  
-
   }
 
+  exports.user_create = async (req, res, next) => {
+    const {error} = registerValidation(req.body)
+    if(error) return res.status(400).send(error.details[0].message)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt)
+    User.find({
+        email: req.body.email,
+      }).exec()
+      .then(findResult => {
+          if (findResult.length > 0) {
+              console.log(findResult)
+            res.status(400).send(findResult)
+          } else {
+            const user = new User({
+                _id: new mongoose.Types.ObjectId(),
+                name: req.body.name,
+                email: req.body.email,
+                password: hashedPassword
+              });
+              user.save()
+                .then(result => {
+                  console.log(result);
+                  res.status(201).send(result)
+                //   .json({
+                //     message: "User registered",
+                //   });
+                })
+          }
+
   
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err)
+      });
+  }
