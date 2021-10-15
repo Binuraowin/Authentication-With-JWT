@@ -95,3 +95,7 @@ exports.register = async (req, res, next) => {
         res.status(400).send(err)
       });
   }
+
+  exports.test = async (req, res, next) => {
+    res.send("username or passsword error")
+  }
